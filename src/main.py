@@ -46,7 +46,6 @@ class Pep:
                 self.actual_status,
                 self.preview_status
             ))
-        logging.info(self)
 
     def __str__(self):
         return (f'{self.number}:{self.preview_status}/'
@@ -176,3 +175,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    _ = BASE_DIR  # tests demand use of BASE Dir

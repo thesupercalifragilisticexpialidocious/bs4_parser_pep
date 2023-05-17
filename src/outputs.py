@@ -47,5 +47,4 @@ def control_output(results, cli_args):
 
 
 if __name__ == '__main__':
-    main()
     _ = BASE_DIR  # tests demand use of BASE Dir
