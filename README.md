@@ -4,7 +4,12 @@ This module's scripts allow for automated collection of some top-level Python do
 
 Three output modes are supported -- simple terminal output, pretty output, and csv.
 
-usage: main.py [-h] [-c] [-o {pretty,file}]
+The project is built upon BeautifulSoup, request-cache, and tqdm libraries.
+
+To run the script install dependencies in a virtual environment `pip install -r requirements.txt`, then launch `src/main.py *mode*`
+
+```
+usage: main.py [-h] [-c] [-o {pretty,file}]s
                {pep,whats-new,latest-versions,download}
 
 positional arguments:
@@ -16,3 +21,6 @@ optional arguments:
   -c, --clear-cache     cache reset
   -o {pretty,file}, --output {pretty,file}
                         additional output modes ('ugly' stdout is default)
+```
+
+github.com/thesupercalifragilisticexpialidocious, 2023.
