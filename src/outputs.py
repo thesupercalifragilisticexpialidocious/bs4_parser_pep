@@ -24,6 +24,19 @@ def pretty_output(results, **kwargs):
 
 
 def file_output(results, cli_args):
+    results_dir = BASE_DIR / 'results'  # whem imported from constants
+    results_dir.mkdir(exist_ok=True)    # results dir doesn't pass pytest
+    file_path = results_dir / FILE_NAME.format(
+        parser_mode=cli_args.mode,
+        now=dt.datetime.now().strftime(DATETIME_FORMAT)
+    )
+    with open(file_path, 'w', encoding='utf-8') as f: 
+        writer = csv.writer(f, dialect=csv.unix_dialect) 
+        writer.writerows(results) 
+    logging.info(SAVE_MESSAGE.format(file_path=file_path))
+
+
+def _file_output(results, cli_args):
     RESULTS_DIR.mkdir(exist_ok=True)
     file_path = RESULTS_DIR / FILE_NAME.format(
         parser_mode=cli_args.mode,

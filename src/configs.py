@@ -24,8 +24,8 @@ def configure_argument_parser(available_modes):
     )
     parser.add_argument(
         '-o',
-        '--output',
-        choices=OUTPUTS.keys(),
+        '--output',  # OUTPUTS.keys(),
+        choices=('pretty', 'file'),  # must have exactly this tuple for pytest
         help='Дополнительные способы вывода данных'
     )
     return parser
