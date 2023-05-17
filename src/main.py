@@ -178,4 +178,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-    _ , __= BASE_DIR, DOWNLOADS_DIR  # tests demand use of BASE Dir
+    _ , __ = BASE_DIR, DOWNLOADS_DIR  # tests demand use of BASE Dir
