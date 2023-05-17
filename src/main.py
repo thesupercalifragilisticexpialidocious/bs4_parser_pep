@@ -138,10 +138,10 @@ def download(session):
     archive_url = urljoin(downloads_url, pdf_a4_tag['href'])
     filename = archive_url.split('/')[-1]
 
-    #DOWNLOADS_DIR.mkdir(exist_ok=True)
-    #archive_path = DOWNLOADS_DIR / filename
-    downloads_dir = BASE_DIR / 'downloads' 
-    downloads_dir.mkdir(exist_ok=True) 
+    # DOWNLOADS_DIR.mkdir(exist_ok=True)
+    # archive_path = DOWNLOADS_DIR / filename
+    downloads_dir = BASE_DIR / 'downloads'
+    downloads_dir.mkdir(exist_ok=True)
     archive_path = downloads_dir / filename
 
     response = session.get(archive_url)
@@ -178,4 +178,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-    _ = BASE_DIR  # tests demand use of BASE Dir
+    _ , __= BASE_DIR, DOWNLOADS_DIR  # tests demand use of BASE Dir
