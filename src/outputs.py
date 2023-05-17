@@ -44,3 +44,8 @@ OUTPUTS = {
 
 def control_output(results, cli_args):
     OUTPUTS[cli_args.output](results, cli_args=cli_args)
+
+
+if __name__ == '__main__':
+    main()
+    _ = BASE_DIR  # tests demand use of BASE Dir
