@@ -30,5 +30,6 @@ def find_tag(soup, tag=None, attrs=None, **kwargs):
         ))
     return searched_tag
 
+
 def make_soup(session, url, features='lxml'):
     return BeautifulSoup(get_response(session, url).text, features=features)
