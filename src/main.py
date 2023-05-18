@@ -34,8 +34,7 @@ class Pep:
         try:
             soup = make_soup(session, self.url)
         except RequestException as e:
-            logging.exception(SINGLE_PEP_LOAD_ERROR(e))
-            return
+            raise ConnectionError(SINGLE_PEP_LOAD_ERROR.format(e))
         for dt in soup.find_all('dt'):
             if dt.text == 'Status:':
                 self.actual_status = dt.next_sibling.next_sibling.string
@@ -54,13 +53,18 @@ class Pep:
 
 def pep(session):
     with logging_redirect_tqdm():
-        peps = [Pep(row=row, session=session) for row in tqdm(find_tag(
+        peps = []
+        for row in tqdm(find_tag(
             find_tag(
                 make_soup(session, PEP_URL),
                 id="numerical-index"
             ),
             'tbody',
-        ).find_all('tr'))]
+        ).find_all('tr')):
+            try:
+                peps.append(Pep(row, session))
+            except ConnectionError as e:
+                logging.exception(e)
     counter = Counter(pep.actual_status for pep in peps)
     return [
         ('Status', 'Number of PEPs'),
@@ -73,33 +77,32 @@ def whats_new(session):
     whats_new_url = urljoin(MAIN_DOC_URL, 'whatsnew/')
     results = [('Ссылка на статью', 'Заголовок', 'Редактор, Автор')]
     with logging_redirect_tqdm():
-        for section in tqdm(make_soup(session, whats_new_url).select(
-            '#what-s-new-in-python div.toctree-wrapper li.toctree-l1'
+        for a_tag in tqdm(make_soup(session, whats_new_url).select(
+            '#what-s-new-in-python div.toctree-wrapper li.toctree-l1 a'
         )):
             version_link = urljoin(
                 whats_new_url,
-                find_tag(section, 'a')['href']
+                a_tag['href']
             )
             try:
                 soup = make_soup(session, version_link)
+                results.append((
+                    version_link,
+                    find_tag(soup, 'h1').text,
+                    find_tag(soup, 'dl').text.replace(
+                        '\n',
+                        ' '
+                    ).encode('utf-8')
+                ))
             except ConnectionError as e:
                 logging.exception(SINGLE_VERSION_LOAD_ERROR.format(e))
-            results.append((
-                version_link,
-                find_tag(soup, 'h1').text,
-                find_tag(soup, 'dl').text.replace('\n', ' ').encode('utf-8')
-            ))
     return results
 
 
 def latest_versions(session):
-    sidebar = find_tag(
-        make_soup(session, MAIN_DOC_URL),
-        'div',
-        class_='sphinxsidebarwrapper'
-    )
-    ul_tags = sidebar.find_all('ul')
-    for ul in ul_tags:
+    for ul in make_soup(session, MAIN_DOC_URL).select(
+        'div.sphinxsidebarwrapper ul'
+    ):
         if 'All versions' in ul.text:
             a_tags = ul.find_all('a')
             break

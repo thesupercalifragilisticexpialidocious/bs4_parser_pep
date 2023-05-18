@@ -16,8 +16,8 @@ RESULTS = 'results'
 DOWNLOADS = 'downloads'
 
 # command line parsing
-PRETTY = 'pretty'
-FILE = 'file'
+NICE_CONSOLE_OUTPUT_KEY = 'pretty'
+EXPORT_OUTPUT_KEY = 'file'
 
 # PEP parsing logic
 EXPECTED_STATUS = {  # should be plural
