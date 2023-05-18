@@ -9,25 +9,24 @@ from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 
 from configs import configure_argument_parser, configure_logging
-from constants import BASE_DIR, DOWNLOADS_DIR, MAIN_DOC_URL, PEP_URL
+from constants import BASE_DIR, DOWNLOADS, MAIN_DOC_URL, PEP_URL
 from outputs import control_output
 from utils import find_tag, make_soup
 
+START = 'Парсер запущен!'
+FINISH = 'Парсер завершил работу.'
 DOWNLOAD_SUCCESS_MESSAGE = 'Архив был загружен и сохранён: {}'
+FAILURE_MESSAGE = 'Аварийный выход: {}'
 MISMATCH_MESSAGE = ('Несовпадающий статус:\n{}\n'
                     'Статус в карточке: {}\n'
                     'Статус в каталоге: {}')
+SEARCH_ERROR = 'Ничего не нашлось'
+SINGLE_PEP_LOAD_ERROR = 'PEP не прогрузился: {}'
+SINGLE_VERSION_LOAD_ERROR = 'Карточка версии не прогрузилась: {}'
 
 
 class Pep:
-    def __init__(self, number=None, url=None, preview_status=None,
-                 actual_status=None, row=None, session=None):
-        if not row:
-            self.number = number
-            self.url = url
-            self.preview_status = preview_status
-            self.actual_status = actual_status
-            return
+    def __init__(self, row=None, session=None):
         a_tag = find_tag(row, 'a')
         self.number = a_tag.text
         self.url = urljoin(PEP_URL, find_tag(row, 'a')['href'])
@@ -35,7 +34,8 @@ class Pep:
         try:
             soup = make_soup(session, self.url)
         except RequestException as e:
-            raise RequestException(e)
+            logging.exception(SINGLE_PEP_LOAD_ERROR(e))
+            return
         for dt in soup.find_all('dt'):
             if dt.text == 'Status:':
                 self.actual_status = dt.next_sibling.next_sibling.string
@@ -71,24 +71,19 @@ def pep(session):
 
 def whats_new(session):
     whats_new_url = urljoin(MAIN_DOC_URL, 'whatsnew/')
-    main_div = find_tag(
-        make_soup(session, whats_new_url),
-        'section',
-        id='what-s-new-in-python'
-    )
-    div_with_ul = find_tag(main_div, 'div', class_='toctree-wrapper')
-    sections_by_python = div_with_ul.find_all('li', class_='toctree-l1')
     results = [('Ссылка на статью', 'Заголовок', 'Редактор, Автор')]
     with logging_redirect_tqdm():
-        for section in tqdm(sections_by_python):
+        for section in tqdm(make_soup(session, whats_new_url).select(
+            '#what-s-new-in-python div.toctree-wrapper li.toctree-l1'
+        )):
             version_link = urljoin(
                 whats_new_url,
                 find_tag(section, 'a')['href']
             )
             try:
                 soup = make_soup(session, version_link)
-            except Exception as e:
-                logging.exception(e)
+            except ConnectionError as e:
+                logging.exception(SINGLE_VERSION_LOAD_ERROR.format(e))
             results.append((
                 version_link,
                 find_tag(soup, 'h1').text,
@@ -109,7 +104,7 @@ def latest_versions(session):
             a_tags = ul.find_all('a')
             break
     else:
-        raise LookupError('Ничего не нашлось')
+        raise LookupError(SEARCH_ERROR)
     results = [('Ссылка на документацию', 'Версия', 'Статус')]
     pattern = r'Python (?P<version>\d\.\d+) \((?P<status>.*)\)'
     for a_tag in a_tags:
@@ -124,26 +119,16 @@ def latest_versions(session):
 
 def download(session):
     downloads_url = urljoin(MAIN_DOC_URL, 'download.html')
-    main_tag = find_tag(
-        make_soup(session, downloads_url),
-        'div',
-        role='main'
+    archive_url = urljoin(
+        downloads_url,
+        make_soup(session, downloads_url).select_one(
+            r'a[href$=pdf-a4\.zip]'
+        )['href']
     )
-    table_tag = find_tag(main_tag, 'table', {'class': 'docutils'})
-    pdf_a4_tag = find_tag(
-        table_tag,
-        'a',
-        {'href': re.compile(r'.+pdf-a4\.zip$')}
-    )
-    archive_url = urljoin(downloads_url, pdf_a4_tag['href'])
     filename = archive_url.split('/')[-1]
-
-    # DOWNLOADS_DIR.mkdir(exist_ok=True)
-    # archive_path = DOWNLOADS_DIR / filename
-    downloads_dir = BASE_DIR / 'downloads'
+    downloads_dir = BASE_DIR / DOWNLOADS
     downloads_dir.mkdir(exist_ok=True)
     archive_path = downloads_dir / filename
-
     response = session.get(archive_url)
     with open(archive_path, 'wb') as file:
         file.write(response.content)
@@ -160,22 +145,21 @@ MODE_TO_FUNCTION = {
 
 def main():
     configure_logging()
-    logging.info('Парсер запущен!')
+    logging.info(START)
     arg_parser = configure_argument_parser(MODE_TO_FUNCTION.keys())
     args = arg_parser.parse_args()
-    session = CachedSession()
-    if args.clear_cache:
-        session.cache.clear()
-    parser_mode = args.mode
     try:
+        session = CachedSession()
+        if args.clear_cache:
+            session.cache.clear()
+        parser_mode = args.mode
         results = MODE_TO_FUNCTION[parser_mode](session)
         if results is not None:
             control_output(results, args)
     except Exception as e:
-        logging.exception(e)
-    logging.info('Парсер завершил работу.')
+        logging.exception(FAILURE_MESSAGE.format(e))
+    logging.info(FINISH)
 
 
 if __name__ == '__main__':
     main()
-    a, b = BASE_DIR, DOWNLOADS_DIR  # tests demand use of BASE Dir

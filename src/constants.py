@@ -12,6 +12,12 @@ FILE_NAME = '{parser_mode}_{now}.csv'
 LOG_DIR = BASE_DIR / 'logs'
 LOG_FILE = LOG_DIR / 'parser.log'
 DATETIME_FORMAT = '%Y-%m-%d_%H-%M-%S'
+RESULTS = 'results'
+DOWNLOADS = 'downloads'
+
+# command line parsing
+PRETTY = 'pretty'
+FILE = 'file'
 
 # PEP parsing logic
 EXPECTED_STATUS = {  # should be plural
