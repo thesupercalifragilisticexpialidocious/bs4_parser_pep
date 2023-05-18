@@ -78,7 +78,7 @@ def whats_new(session):
     results = [('Ссылка на статью', 'Заголовок', 'Редактор, Автор')]
     with logging_redirect_tqdm():
         for a_tag in tqdm(make_soup(session, whats_new_url).select(
-            '#what-s-new-in-python div.toctree-wrapper li.toctree-l1 a'
+            '#what-s-new-in-python div.toctree-wrapper li.toctree-l1 > a'
         )):
             version_link = urljoin(
                 whats_new_url,
