@@ -2,7 +2,8 @@ import argparse
 import logging
 from logging.handlers import RotatingFileHandler
 
-from constants import EXPORT_OUTPUT_KEY, LOG_DIR, LOG_FILE, NICE_CONSOLE_OUTPUT_KEY
+from constants import (EXPORT_OUTPUT_KEY, LOG_DIR, LOG_FILE,
+                       NICE_CONSOLE_OUTPUT_KEY)
 
 LOG_FORMAT = '"%(asctime)s - [%(levelname)s] - %(message)s"'
 DT_FORMAT = '%d.%m.%Y %H:%M:%S'
