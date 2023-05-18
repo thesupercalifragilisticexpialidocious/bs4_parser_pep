@@ -3,7 +3,6 @@ from urllib.parse import urljoin
 import logging
 import re
 
-from requests import RequestException
 from requests_cache import CachedSession
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
@@ -31,10 +30,7 @@ class Pep:
         self.number = a_tag.text
         self.url = urljoin(PEP_URL, find_tag(row, 'a')['href'])
         self.preview_status = find_tag(row, 'abbr')['title'].split(', ')[-1]
-        try:
-            soup = make_soup(session, self.url)
-        except RequestException as e:
-            raise ConnectionError(SINGLE_PEP_LOAD_ERROR.format(e))
+        soup = make_soup(session, self.url)
         for dt in soup.find_all('dt'):
             if dt.text == 'Status:':
                 self.actual_status = dt.next_sibling.next_sibling.string
